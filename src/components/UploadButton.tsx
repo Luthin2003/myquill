@@ -1,21 +1,27 @@
 "use client";
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
 import { Button } from "./ui/button";
+
 import Dropzone from "react-dropzone";
 import { Cloud, File, Loader2 } from "lucide-react";
 import { Progress } from "./ui/progress";
 import { useUploadThing } from "@/lib/uploadthing";
-import { toast, useToast } from "./ui/use-toast";
-import { useRouter } from "next/navigation";
+import { useToast } from "./ui/use-toast";
 import { trpc } from "@/app/_trpc/client";
+import { useRouter } from "next/navigation";
 
-const UploadDropzone = () => {
+const UploadDropzone = ({ isSubscribed }: { isSubscribed: boolean }) => {
   const router = useRouter();
+
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadProgress, setUploadProgress] = useState<number>(0);
   const { toast } = useToast();
-  const { startUpload } = useUploadThing("pdfUploader");
+
+  const { startUpload } = useUploadThing(
+    isSubscribed ? "proPlanUploader" : "freePlanUploader"
+  );
 
   const { mutate: startPolling } = trpc.getFile.useMutation({
     onSuccess: (file) => {
@@ -40,12 +46,16 @@ const UploadDropzone = () => {
 
     return interval;
   };
+
   return (
     <Dropzone
       multiple={false}
       onDrop={async (acceptedFile) => {
         setIsUploading(true);
+
         const progressInterval = startSimulatedProgress();
+
+        // handle file uploading
         const res = await startUpload(acceptedFile);
 
         if (!res) {
@@ -55,6 +65,7 @@ const UploadDropzone = () => {
             variant: "destructive",
           });
         }
+
         const [fileResponse] = res;
 
         const key = fileResponse?.key;
@@ -66,6 +77,7 @@ const UploadDropzone = () => {
             variant: "destructive",
           });
         }
+
         clearInterval(progressInterval);
         setUploadProgress(100);
 
@@ -77,18 +89,20 @@ const UploadDropzone = () => {
           {...getRootProps()}
           className="border h-64 m-4 border-dashed border-gray-300 rounded-lg"
         >
-          <div className="flex flex-col  items-center justify-center w-full h-full">
+          <div className="flex items-center justify-center h-full w-full">
             <label
               htmlFor="dropzone-file"
-              className="flex flex-col  items-center justify-center w-full h-full rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+              className="flex flex-col items-center justify-center w-full h-full rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
             >
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <Cloud className="h-6 w-6 text-zinc-500 mb-2" />
                 <p className="mb-2 text-sm text-zinc-700">
-                  <span className="font-semibold">click to Upload</span> or drag
+                  <span className="font-semibold">Click to upload</span> or drag
                   and drop
                 </p>
-                <p className="text-xs text-zinc-500">PDF (up to 4MB)</p>
+                <p className="text-xs text-zinc-500">
+                  PDF (up to {isSubscribed ? "16" : "4"}MB)
+                </p>
               </div>
 
               {acceptedFiles && acceptedFiles[0] ? (
@@ -119,6 +133,7 @@ const UploadDropzone = () => {
                   ) : null}
                 </div>
               ) : null}
+
               <input
                 {...getInputProps()}
                 type="file"
@@ -133,12 +148,12 @@ const UploadDropzone = () => {
   );
 };
 
-const UploadButton = () => {
-  const [isopen, setIsOpen] = useState<boolean>(false);
+const UploadButton = ({ isSubscribed }: { isSubscribed: boolean }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
     <Dialog
-      open={isopen}
+      open={isOpen}
       onOpenChange={(v) => {
         if (!v) {
           setIsOpen(v);
@@ -148,8 +163,9 @@ const UploadButton = () => {
       <DialogTrigger onClick={() => setIsOpen(true)} asChild>
         <Button>Upload PDF</Button>
       </DialogTrigger>
+
       <DialogContent>
-        <UploadDropzone />
+        <UploadDropzone isSubscribed={isSubscribed} />
       </DialogContent>
     </Dialog>
   );

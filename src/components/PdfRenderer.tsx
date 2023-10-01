@@ -8,26 +8,31 @@ import {
   Search,
 } from "lucide-react";
 import { Document, Page, pdfjs } from "react-pdf";
+
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { useToast } from "./ui/use-toast";
+
 import { useResizeDetector } from "react-resize-detector";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
+
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
-import SimpleBar from "simplebar-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+
+import SimpleBar from "simplebar-react";
 import PdfFullscreen from "./PdfFullscreen";
+
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 interface PdfRendererProps {
@@ -39,10 +44,11 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
 
   const [numPages, setNumPages] = useState<number>();
   const [currPage, setCurrPage] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1);
+  const [rotation, setRotation] = useState<number>(0);
   const [renderedScale, setRenderedScale] = useState<number | null>(null);
 
-  const [rotation, setRotation] = useState<number>(0);
-  const [scale, setScale] = useState<number>(1);
+  const isLoading = renderedScale !== scale;
 
   const CustomPageValidator = z.object({
     page: z
@@ -51,6 +57,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
   });
 
   type TCustomPageValidator = z.infer<typeof CustomPageValidator>;
+
   const {
     register,
     handleSubmit,
@@ -63,7 +70,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
     resolver: zodResolver(CustomPageValidator),
   });
 
-  const isLoading = renderedScale !== scale;
+  console.log(errors);
 
   const { width, ref } = useResizeDetector();
 
@@ -87,7 +94,8 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
-          <div className="flex item-center gap-1.5">
+
+          <div className="flex items-center gap-1.5">
             <Input
               {...register("page")}
               className={cn(
@@ -102,9 +110,10 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
             />
             <p className="text-zinc-700 text-sm space-x-1">
               <span>/</span>
-              <span>{numPages ?? "X"}</span>
+              <span>{numPages ?? "x"}</span>
             </p>
           </div>
+
           <Button
             disabled={numPages === undefined || currPage === numPages}
             onClick={() => {
@@ -119,6 +128,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
             <ChevronUp className="h-4 w-4" />
           </Button>
         </div>
+
         <div className="space-x-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -155,6 +165,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
           <PdfFullscreen fileUrl={url} />
         </div>
       </div>
+
       <div className="flex-1 w-full max-h-screen">
         <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)]">
           <div ref={ref}>
@@ -184,6 +195,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                   key={"@" + renderedScale}
                 />
               ) : null}
+
               <Page
                 className={cn(isLoading ? "hidden" : "")}
                 width={width ? width : 1}

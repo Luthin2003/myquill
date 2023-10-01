@@ -7,15 +7,14 @@ import { ChevronLeft, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { buttonVariants } from "../ui/button";
 import { ChatContextProvider } from "./ChatContext";
-// import { buttonVariants } from "../ui/button";
-// import { ChatContextProvider } from "./ChatContext";
-// import { PLANS } from "@/config/stripe";
+import { PLANS } from "@/config/stripe";
 
 interface ChatWrapperProps {
   fileId: string;
+  isSubscribed: boolean;
 }
 
-const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
+const ChatWrapper = ({ fileId, isSubscribed }: ChatWrapperProps) => {
   const { data, isLoading } = trpc.getFileUploadStatus.useQuery(
     {
       fileId,
@@ -68,13 +67,12 @@ const ChatWrapper = ({ fileId }: ChatWrapperProps) => {
             <p className="text-zinc-500 text-sm">
               Your{" "}
               <span className="font-medium">
-                Free
-                {/* {isSubscribed ? "Pro" : "Free"} */}
+                {isSubscribed ? "Pro" : "Free"}
               </span>{" "}
-              plan supports up to 5
-              {/* {isSubscribed
+              plan supports up to{" "}
+              {isSubscribed
                 ? PLANS.find((p) => p.name === "Pro")?.pagesPerPdf
-                : PLANS.find((p) => p.name === "Free")?.pagesPerPdf}{" "} */}
+                : PLANS.find((p) => p.name === "Free")?.pagesPerPdf}{" "}
               pages per PDF.
             </p>
             <Link
